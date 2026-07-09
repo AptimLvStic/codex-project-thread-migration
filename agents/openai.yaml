@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Project Thread Migration"
+  short_description: "Migrate Codex threads by project workspace"
+  default_prompt: "Use $codex-project-thread-migration to migrate all Codex conversations for this project into the current project."
