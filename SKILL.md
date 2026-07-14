@@ -30,6 +30,16 @@ Before asking the user to continue an old task, compare its recorded `ModelProvi
 - Parse the updated TOML and confirm that the provider key exists. When the client exposes a non-mutating open or resume check, use it to confirm the old task no longer reports a missing-provider error before reporting it as resumable.
 - Keep provider configuration changes local. Never copy configuration values, endpoint URLs, credentials, or error logs containing user data into a public Skill, commit, PR, or issue.
 
+## Directly Resumable Tasks (Explicit Opt-In)
+
+When the user wants migrated history to accept a new prompt immediately, rather than requiring a UI action such as "Continue task", restore a current user task from the historical thread.
+
+- Do this only with explicit user authorization because it creates a new task with a new ID while retaining the source history.
+- Use the App Server `thread/fork` method with `threadSource: "user"`, the currently configured model provider, and the original thread ID. The desktop `fork_thread` wrapper can create a subagent child, which is not a replacement for a directly resumable user task.
+- Process one fork request per App Server connection and verify that the created task has `thread_source = user` and the current model provider before moving to the next source.
+- Preserve the source title and cwd. Keep archived source threads unchanged; do not unarchive them merely to make an active continuation.
+- Verify the new task opens as an ordinary user task without the continuation prompt. If UI automation is unavailable, report that final UI check separately rather than treating a readable history copy as proof.
+
 ## Public Skill Privacy
 
 When updating a publicly shared version of this Skill, describe the workflow only in generic terms.
@@ -63,11 +73,14 @@ When updating a publicly shared version of this Skill, describe the workflow onl
 
    If the user has explicitly authorized visible copies, follow **Visible Copies (Explicit Opt-In)** after this step. Never treat a readable source thread as missing solely because a desktop sidebar does not show it.
 
+   If the user has explicitly authorized directly resumable tasks, follow **Directly Resumable Tasks (Explicit Opt-In)**. This creates an additional current user task and is not a substitute for preserving the source thread.
+
 4. Verify the sync.
    - Re-read every source or forked thread.
    - Confirm its `cwd` resolves to the original workspace path. Windows may expose this as a `\\?\`-prefixed path; compare normalized paths.
    - Confirm title, archive status, and pin state match the source inventory.
    - For visible-copy work, confirm UI visibility separately from readability and record any UI result limit.
+   - For direct-resume work, confirm the new thread is a user task with the current model provider and verify the ordinary task input is available.
    - Report totals by workspace plus source ID -> restored ID mappings only where a fork was required.
 
 ## Safety Rules
