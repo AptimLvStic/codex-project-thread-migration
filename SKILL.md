@@ -17,7 +17,9 @@ Some Codex desktop views show only a subset of readable historical tasks for a p
 - Limit copies to the requested active user threads. Keep archived sources archived unless the user explicitly asks to surface archive history too.
 - Use `fork_thread` with `environment: { type: "same-directory" }`, then set the child title to the source title or fallback title.
 - Do not rename, archive, unarchive, delete, or otherwise alter the source thread.
-- Record every source ID -> visible-copy ID mapping and verify the new thread's title, cwd, active state, and readability.
+- Record every source ID -> visible-copy ID mapping only in the private task report. Do not commit mappings to a public repository.
+- Verify the new thread's title, cwd, active state, and readability. Then verify that it appears in the actual project sidebar or desktop task list; a readable thread alone is not evidence that it is visible.
+- If the desktop view has a result cap, report the cap and which view contains the remaining copies. Do not claim that every copy is visible in one list unless that view was checked.
 
 ## Provider Compatibility
 
@@ -25,7 +27,15 @@ Before asking the user to continue an old task, compare its recorded `ModelProvi
 
 - A missing provider name causes resumes to fail even when the historical thread is readable.
 - Restore a missing provider alias only when its endpoint and credentials can be safely derived from an existing configured provider or confirmed by the user. Do not invent a URL, model, or credential.
-- Parse the updated TOML and confirm that the provider key exists before reporting the old task as resumable.
+- Parse the updated TOML and confirm that the provider key exists. When the client exposes a non-mutating open or resume check, use it to confirm the old task no longer reports a missing-provider error before reporting it as resumable.
+- Keep provider configuration changes local. Never copy configuration values, endpoint URLs, credentials, or error logs containing user data into a public Skill, commit, PR, or issue.
+
+## Public Skill Privacy
+
+When updating a publicly shared version of this Skill, describe the workflow only in generic terms.
+
+- Never commit local configuration, credentials, provider endpoints, account identifiers, filesystem paths, workspace names, thread IDs, titles, screenshots, conversation content, or source-to-copy mappings.
+- Use anonymous examples and generic PR descriptions. Verify the public diff contains only reusable instructions before publishing.
 
 ## Choose Scope
 
@@ -57,6 +67,7 @@ Before asking the user to continue an old task, compare its recorded `ModelProvi
    - Re-read every source or forked thread.
    - Confirm its `cwd` resolves to the original workspace path. Windows may expose this as a `\\?\`-prefixed path; compare normalized paths.
    - Confirm title, archive status, and pin state match the source inventory.
+   - For visible-copy work, confirm UI visibility separately from readability and record any UI result limit.
    - Report totals by workspace plus source ID -> restored ID mappings only where a fork was required.
 
 ## Safety Rules
