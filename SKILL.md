@@ -9,6 +9,24 @@ description: Restore or synchronize all local Codex conversations after an API, 
 
 Synchronize local Codex history without editing SQLite databases, global state files, or raw session JSONL. Preserve original thread IDs whenever the current Codex state can already read them; fork only genuinely missing threads.
 
+## Visible Copies (Explicit Opt-In)
+
+Some Codex desktop views show only a subset of readable historical tasks for a project. When the user explicitly asks for additional old tasks to appear in that view, create **visible copies** only after confirming that duplicate task IDs are acceptable.
+
+- This is a presentation recovery mode, not the default synchronization path.
+- Limit copies to the requested active user threads. Keep archived sources archived unless the user explicitly asks to surface archive history too.
+- Use `fork_thread` with `environment: { type: "same-directory" }`, then set the child title to the source title or fallback title.
+- Do not rename, archive, unarchive, delete, or otherwise alter the source thread.
+- Record every source ID -> visible-copy ID mapping and verify the new thread's title, cwd, active state, and readability.
+
+## Provider Compatibility
+
+Before asking the user to continue an old task, compare its recorded `ModelProvider` with the providers declared in the active `config.toml`.
+
+- A missing provider name causes resumes to fail even when the historical thread is readable.
+- Restore a missing provider alias only when its endpoint and credentials can be safely derived from an existing configured provider or confirmed by the user. Do not invent a URL, model, or credential.
+- Parse the updated TOML and confirm that the provider key exists before reporting the old task as resumable.
+
 ## Choose Scope
 
 - For all local conversations, projects, archived conversations, and pinned conversations, run the scanner with `-All`.
@@ -32,6 +50,8 @@ Synchronize local Codex history without editing SQLite databases, global state f
    - Rename the new thread to the original `Title`; use `FallbackTitle` only when no title exists.
    - Set the forked thread's pinned state to the original `Pinned` value.
    - Do not change the source thread, raw session file, SQLite database, or global state file.
+
+   If the user has explicitly authorized visible copies, follow **Visible Copies (Explicit Opt-In)** after this step. Never treat a readable source thread as missing solely because a desktop sidebar does not show it.
 
 4. Verify the sync.
    - Re-read every source or forked thread.
